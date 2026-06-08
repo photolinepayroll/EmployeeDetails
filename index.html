@@ -44,41 +44,6 @@
       margin-bottom: 14px;
     }
 
-    .bdo-logo .bdo-text {
-      font-size: 36px;
-      font-weight: 900;
-      color: #1a4a9a;
-      letter-spacing: -1px;
-      font-family: Arial Black, Arial, sans-serif;
-      line-height: 1;
-    }
-
-    .bdo-logo .bdo-o {
-      display: inline-block;
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      border: 6px solid #f5a800;
-      background: transparent;
-      margin: 0 1px;
-      vertical-align: middle;
-      position: relative;
-      top: -1px;
-    }
-
-    .bdo-logo .bdo-insure {
-      font-size: 26px;
-      font-weight: 700;
-      color: #1a4a9a;
-      font-family: Arial, sans-serif;
-      margin-left: 6px;
-    }
-
-    .bdo-logo .bdo-insure sup {
-      font-size: 12px;
-      vertical-align: super;
-    }
-
     /* Internal use banner */
     .internal-banner {
       background: #1a4a9a;
@@ -380,10 +345,20 @@
 
 <div class="card">
   <div class="card-header">
-    <!-- BDO Insure Logo -->
+    <!-- BDO Insure Logo (SVG) -->
     <div class="bdo-logo">
-      <span class="bdo-text">BD</span><span class="bdo-o"></span><span class="bdo-text" style="margin-left:1px;"> </span>
-      <span class="bdo-insure">Insure<sup>®</sup></span>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 120" width="260" height="75" role="img" aria-label="BDO Insure">
+        <!-- B -->
+        <text x="8" y="95" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="100" fill="#1a50a0">B</text>
+        <!-- D -->
+        <text x="72" y="95" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="100" fill="#1a50a0">D</text>
+        <!-- O ring (gold) -->
+        <circle cx="198" cy="52" r="38" fill="none" stroke="#f5a800" stroke-width="16"/>
+        <!-- Insure -->
+        <text x="247" y="88" font-family="Arial, sans-serif" font-weight="700" font-size="58" fill="#1a50a0">Insure</text>
+        <!-- ® -->
+        <text x="399" y="40" font-family="Arial, sans-serif" font-weight="400" font-size="28" fill="#1a50a0">®</text>
+      </svg>
     </div>
 
     <div class="internal-banner">&#128274; Internal Use Only</div>
