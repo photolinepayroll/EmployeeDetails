@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Employee Details</title>
+  <title>BDO Payroll Savings Account — Regular Employees</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -36,14 +36,79 @@
       margin-bottom: 8px;
     }
 
-    .card-header h1 {
-      font-size: 22px;
-      color: #1a2e4a;
-      font-weight: 700;
+    /* BDO logo */
+    .bdo-logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 14px;
     }
 
-    .card-header p {
-      font-size: 13px;
+    .bdo-logo .bdo-text {
+      font-size: 36px;
+      font-weight: 900;
+      color: #1a4a9a;
+      letter-spacing: -1px;
+      font-family: Arial Black, Arial, sans-serif;
+      line-height: 1;
+    }
+
+    .bdo-logo .bdo-o {
+      display: inline-block;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 6px solid #f5a800;
+      background: transparent;
+      margin: 0 1px;
+      vertical-align: middle;
+      position: relative;
+      top: -1px;
+    }
+
+    .bdo-logo .bdo-insure {
+      font-size: 26px;
+      font-weight: 700;
+      color: #1a4a9a;
+      font-family: Arial, sans-serif;
+      margin-left: 6px;
+    }
+
+    .bdo-logo .bdo-insure sup {
+      font-size: 12px;
+      vertical-align: super;
+    }
+
+    /* Internal use banner */
+    .internal-banner {
+      background: #1a4a9a;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-align: center;
+      padding: 5px 12px;
+      border-radius: 4px;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+    }
+
+    .card-header h1 {
+      font-size: 20px;
+      color: #1a2e4a;
+      font-weight: 700;
+      margin-top: 2px;
+    }
+
+    .card-header .subtitle {
+      font-size: 12px;
+      color: #1a4a9a;
+      font-weight: 600;
+      margin-top: 3px;
+    }
+
+    .card-header .desc {
+      font-size: 12px;
       color: #6b7a8d;
       margin-top: 4px;
     }
@@ -315,9 +380,17 @@
 
 <div class="card">
   <div class="card-header">
-    <div class="icon">👤</div>
-    <h1>Employee Details</h1>
-    <p>Search your name, then fill in your personal details.</p>
+    <!-- BDO Insure Logo -->
+    <div class="bdo-logo">
+      <span class="bdo-text">BD</span><span class="bdo-o"></span><span class="bdo-text" style="margin-left:1px;"> </span>
+      <span class="bdo-insure">Insure<sup>®</sup></span>
+    </div>
+
+    <div class="internal-banner">&#128274; Internal Use Only</div>
+
+    <h1>Regular Employees</h1>
+    <div class="subtitle">BDO Payroll Savings Account — Data Collection</div>
+    <p class="desc">Search your name and fill in the required details below.<br>This information is a requirement for enrollment.</p>
   </div>
 
   <!-- Step indicator -->
@@ -406,7 +479,7 @@
     <div class="success-screen">
       <div class="big-icon">🎉</div>
       <h2>Details Submitted!</h2>
-      <p>Your personal details have been successfully recorded. Thank you!</p>
+      <p>Your details have been submitted for BDO Payroll Savings Account enrollment. Thank you!</p>
 
       <div class="summary-box" id="summaryBox"></div>
 
