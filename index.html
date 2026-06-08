@@ -413,10 +413,16 @@
 
   <!-- STEP 1: Search name -->
   <div class="section active" id="sec-search">
+    <div id="loadingMsg" style="text-align:center;padding:10px;font-size:13px;color:#2563eb;">
+      ⏳ Loading employee list from database…
+    </div>
+    <div id="loadErrMsg" style="display:none;text-align:center;padding:8px;font-size:12px;color:#dc2626;background:#fef2f2;border-radius:6px;margin-bottom:10px;">
+      ⚠️ Could not load from Google Sheets. Showing local list.
+    </div>
     <label for="nameSearch">Search Your Name</label>
     <div class="search-wrap">
       <span class="search-icon">🔍</span>
-      <input type="text" id="nameSearch" placeholder="Type your name to search…" autocomplete="off" />
+      <input type="text" id="nameSearch" placeholder="Type your name to search…" autocomplete="off" disabled />
       <div class="dropdown" id="dropdown"></div>
     </div>
 
@@ -572,13 +578,20 @@
 
   async function loadNamesFromSheet() {
     try {
-      const res = await fetch(`${APPS_SCRIPT_URL}?action=getNames`);
-      const json = await res.json();
-      if (json.names) {
+      const res = await fetch(`${APPS_SCRIPT_URL}?action=getNames`, {
+        method: "GET",
+        redirect: "follow"
+      });
+      const text = await res.text();
+      const json = JSON.parse(text);
+      if (json.names && json.names.length > 0) {
         sheetEmployees = json.names;
+        console.log("Loaded " + json.names.length + " names from sheet");
         return true;
       }
-    } catch (e) { /* fall through to local list */ }
+    } catch (e) {
+      console.error("Sheet load error:", e);
+    }
     return false;
   }
 
@@ -650,9 +663,20 @@
   let chosenEmployee = null; // { name, row }
   let namesLoaded = false;
 
+  const loadingMsg = document.getElementById("loadingMsg");
+  const loadErrMsg = document.getElementById("loadErrMsg");
+
   // Load names from sheet on page load
   (async () => {
     namesLoaded = await loadNamesFromSheet();
+    loadingMsg.style.display = "none";
+    nameSearch.disabled = false;
+    if (!namesLoaded) {
+      loadErrMsg.style.display = "block";
+      console.warn("Falling back to local list");
+    } else {
+      nameSearch.placeholder = `Search from ${sheetEmployees.length} employees…`;
+    }
   })();
 
   // ─────────────────────────────────────────────
