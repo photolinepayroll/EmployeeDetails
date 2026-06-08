@@ -451,18 +451,33 @@
     </div>
 
     <div class="form-group">
-      <label for="birthday">Birthday</label>
-      <input type="date" id="birthday" />
+      <label for="birthday">Date of Birth (MM/DD/YYYY) <span style="color:red">*</span></label>
+      <input type="text" id="birthday" placeholder="MM/DD/YYYY" maxlength="10" />
     </div>
 
     <div class="form-group">
-      <label for="mobile">Mobile Number</label>
+      <label>AGE</label>
+      <input type="text" id="age" placeholder="Auto-calculated" readonly
+        style="background:#f1f5f9; color:#374151; cursor:not-allowed;" />
+    </div>
+
+    <div class="form-group">
+      <label for="email">Personal Email Address <span style="color:red">*</span></label>
+      <input type="email" id="email" placeholder="e.g. juan@email.com" />
+    </div>
+
+    <div class="form-group">
+      <label for="mobile">Mobile Number <span style="color:red">*</span></label>
       <input type="tel" id="mobile" placeholder="e.g. 09171234567" maxlength="15" />
     </div>
 
     <div class="form-group">
-      <label for="email">Personal Email Address</label>
-      <input type="email" id="email" placeholder="e.g. juan@email.com" />
+      <label for="gender">Gender <span style="color:red">*</span></label>
+      <select id="gender" style="width:100%;padding:10px 14px;border:1.5px solid #d1d5db;border-radius:8px;font-size:14px;outline:none;background:#fff;color:#374151;">
+        <option value="">— Select Gender —</option>
+        <option value="Male">Male</option>
+        <option value="Female">Female</option>
+      </select>
     </div>
 
     <div class="alert alert-error" id="alertValidation">
@@ -581,14 +596,36 @@
   const confirmName       = document.getElementById("confirmName");
   const alertAlreadyFiled = document.getElementById("alertAlreadyFiled");
   const birthday          = document.getElementById("birthday");
+  const ageField          = document.getElementById("age");
   const mobile            = document.getElementById("mobile");
   const email             = document.getElementById("email");
+  const gender            = document.getElementById("gender");
   const alertValidation   = document.getElementById("alertValidation");
   const alertValidationMsg= document.getElementById("alertValidationMsg");
   const btnSubmit         = document.getElementById("btnSubmit");
   const btnBack           = document.getElementById("btnBack");
   const summaryBox        = document.getElementById("summaryBox");
   const btnReset          = document.getElementById("btnReset");
+
+  // Auto-format DOB as MM/DD/YYYY and calculate age
+  birthday.addEventListener("input", () => {
+    let v = birthday.value.replace(/\D/g, "");
+    if (v.length >= 3 && v.length <= 4)      v = v.slice(0,2) + "/" + v.slice(2);
+    else if (v.length >= 5)                  v = v.slice(0,2) + "/" + v.slice(2,4) + "/" + v.slice(4,8);
+    birthday.value = v;
+
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(v)) {
+      const [m, d, y] = v.split("/").map(Number);
+      const dob = new Date(y, m - 1, d);
+      const today = new Date();
+      let age = today.getFullYear() - dob.getFullYear();
+      const mDiff = today.getMonth() - dob.getMonth();
+      if (mDiff < 0 || (mDiff === 0 && today.getDate() < dob.getDate())) age--;
+      ageField.value = age > 0 && age < 120 ? age : "";
+    } else {
+      ageField.value = "";
+    }
+  });
 
   let chosenEmployee = null;
 
@@ -645,8 +682,10 @@
 
     confirmName.textContent = chosenEmployee;
     birthday.value = "";
+    ageField.value = "";
     mobile.value   = "";
     email.value    = "";
+    gender.value   = "";
     alertValidation.classList.remove("show");
 
     if (hasRecord(chosenEmployee)) {
@@ -674,11 +713,19 @@
     alertValidation.classList.remove("show");
 
     const bday  = birthday.value.trim();
-    const mob   = mobile.value.trim();
+    const age   = ageField.value.trim();
     const eml   = email.value.trim();
+    const mob   = mobile.value.trim();
+    const gen   = gender.value.trim();
 
-    if (!bday || !mob || !eml) {
-      alertValidationMsg.textContent = "Please fill in all fields.";
+    if (!bday || !eml || !mob || !gen) {
+      alertValidationMsg.textContent = "Please fill in all required fields.";
+      alertValidation.classList.add("show");
+      return;
+    }
+
+    if (!/^\d{2}\/\d{2}\/\d{4}$/.test(bday)) {
+      alertValidationMsg.textContent = "Date of Birth must be in MM/DD/YYYY format.";
       alertValidation.classList.add("show");
       return;
     }
@@ -695,15 +742,17 @@
       return;
     }
 
-    const record = { birthday: bday, mobile: mob, email: eml, submittedAt: new Date().toLocaleString() };
+    const record = { birthday: bday, age, email: eml, mobile: mob, gender: gen, submittedAt: new Date().toLocaleString() };
     saveRecord(chosenEmployee, record);
 
     // Build summary
     summaryBox.innerHTML = `
       <div class="summary-row"><span class="key">Name</span><span class="val">${chosenEmployee}</span></div>
-      <div class="summary-row"><span class="key">Birthday</span><span class="val">${formatDate(bday)}</span></div>
-      <div class="summary-row"><span class="key">Mobile</span><span class="val">${mob}</span></div>
-      <div class="summary-row"><span class="key">Email</span><span class="val">${eml}</span></div>
+      <div class="summary-row"><span class="key">Date of Birth</span><span class="val">${bday}</span></div>
+      <div class="summary-row"><span class="key">Age</span><span class="val">${age}</span></div>
+      <div class="summary-row"><span class="key">Personal Email</span><span class="val">${eml}</span></div>
+      <div class="summary-row"><span class="key">Mobile Number</span><span class="val">${mob}</span></div>
+      <div class="summary-row"><span class="key">Gender</span><span class="val">${gen}</span></div>
       <div class="summary-row"><span class="key">Submitted</span><span class="val">${record.submittedAt}</span></div>
     `;
 
@@ -717,6 +766,11 @@
   btnReset.addEventListener("click", () => {
     chosenEmployee = null;
     nameSearch.value = "";
+    birthday.value = "";
+    ageField.value = "";
+    mobile.value = "";
+    email.value = "";
+    gender.value = "";
     selectedBadge.classList.remove("show");
     alertNotFound.classList.remove("show");
     btnNext.disabled = true;
