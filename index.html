@@ -505,7 +505,12 @@
 
 <script>
   // ─────────────────────────────────────────────
-  // EMPLOYEE NAME LIST — replace with actual names
+  // PASTE YOUR APPS SCRIPT WEB APP URL BELOW
+  // ─────────────────────────────────────────────
+  const APPS_SCRIPT_URL = "PASTE_YOUR_APPS_SCRIPT_URL_HERE";
+
+  // ─────────────────────────────────────────────
+  // FALLBACK name list (used only if sheet fails)
   // ─────────────────────────────────────────────
   const EMPLOYEE_LIST = [
     "Abad, Maria Santos",
@@ -561,22 +566,37 @@
   ];
 
   // ─────────────────────────────────────────────
-  // Local storage key for submitted records
+  // Google Sheet data — loaded on page start
   // ─────────────────────────────────────────────
-  const STORAGE_KEY = "employeeDetails_records";
+  let sheetEmployees = []; // [{ name, row }]
 
-  function getRecords() {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+  async function loadNamesFromSheet() {
+    try {
+      const res = await fetch(`${APPS_SCRIPT_URL}?action=getNames`);
+      const json = await res.json();
+      if (json.names) {
+        sheetEmployees = json.names;
+        return true;
+      }
+    } catch (e) { /* fall through to local list */ }
+    return false;
   }
 
-  function saveRecord(name, data) {
-    const records = getRecords();
-    records[name] = data;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+  async function checkSheetRecord(row) {
+    try {
+      const res = await fetch(`${APPS_SCRIPT_URL}?action=checkRecord&row=${row}`);
+      const json = await res.json();
+      return json.hasRecord === true;
+    } catch (e) { return false; }
   }
 
-  function hasRecord(name) {
-    return !!getRecords()[name];
+  async function submitToSheet(row, dob, age, email, mobile, gender) {
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      body: JSON.stringify({ row, dob, age, email, mobile, gender })
+    });
+    const json = await res.json();
+    return json.success === true;
   }
 
   // ─────────────────────────────────────────────
@@ -627,7 +647,13 @@
     }
   });
 
-  let chosenEmployee = null;
+  let chosenEmployee = null; // { name, row }
+  let namesLoaded = false;
+
+  // Load names from sheet on page load
+  (async () => {
+    namesLoaded = await loadNamesFromSheet();
+  })();
 
   // ─────────────────────────────────────────────
   // Step 1: Search logic
@@ -641,7 +667,12 @@
 
     if (!q) { dropdown.classList.remove("open"); return; }
 
-    const matches = EMPLOYEE_LIST.filter(n => n.toLowerCase().includes(q));
+    // Search from Google Sheet data if loaded, else fallback list
+    const source = namesLoaded
+      ? sheetEmployees.map(e => e.name)
+      : EMPLOYEE_LIST;
+
+    const matches = source.filter(n => n.toLowerCase().includes(q));
     dropdown.innerHTML = "";
 
     if (matches.length === 0) {
@@ -665,7 +696,9 @@
   });
 
   function selectEmployee(name) {
-    chosenEmployee = name;
+    // Find the sheet row for this name
+    const match = sheetEmployees.find(e => e.name === name);
+    chosenEmployee = match ? match : { name, row: null };
     nameSearch.value = name;
     dropdown.classList.remove("open");
     selectedName.textContent = name;
@@ -677,21 +710,22 @@
   // ─────────────────────────────────────────────
   // Step 1 → Step 2
   // ─────────────────────────────────────────────
-  btnNext.addEventListener("click", () => {
+  btnNext.addEventListener("click", async () => {
     if (!chosenEmployee) return;
 
-    confirmName.textContent = chosenEmployee;
+    confirmName.textContent = chosenEmployee.name;
     birthday.value = "";
     ageField.value = "";
     mobile.value   = "";
     email.value    = "";
     gender.value   = "";
     alertValidation.classList.remove("show");
+    alertAlreadyFiled.classList.remove("show");
 
-    if (hasRecord(chosenEmployee)) {
-      alertAlreadyFiled.classList.add("show");
-    } else {
-      alertAlreadyFiled.classList.remove("show");
+    // Check Google Sheet for existing record
+    if (chosenEmployee.row) {
+      const exists = await checkSheetRecord(chosenEmployee.row);
+      if (exists) alertAlreadyFiled.classList.add("show");
     }
 
     showSection(secDetails);
@@ -709,7 +743,7 @@
   // ─────────────────────────────────────────────
   // Step 2: Submit
   // ─────────────────────────────────────────────
-  btnSubmit.addEventListener("click", () => {
+  btnSubmit.addEventListener("click", async () => {
     alertValidation.classList.remove("show");
 
     const bday  = birthday.value.trim();
@@ -742,18 +776,35 @@
       return;
     }
 
-    const record = { birthday: bday, age, email: eml, mobile: mob, gender: gen, submittedAt: new Date().toLocaleString() };
-    saveRecord(chosenEmployee, record);
+    // Disable button and show loading
+    btnSubmit.disabled = true;
+    btnSubmit.textContent = "Submitting…";
 
-    // Build summary
+    let success = false;
+    if (chosenEmployee.row) {
+      success = await submitToSheet(chosenEmployee.row, bday, age, eml, mob, gen);
+    }
+
+    if (!success && !chosenEmployee.row) {
+      alertValidationMsg.textContent = "Could not connect to the database. Please try again.";
+      alertValidation.classList.add("show");
+      btnSubmit.disabled = false;
+      btnSubmit.textContent = "Submit Details";
+      return;
+    }
+
+    btnSubmit.disabled = false;
+    btnSubmit.textContent = "Submit Details";
+
+    const submittedAt = new Date().toLocaleString();
     summaryBox.innerHTML = `
-      <div class="summary-row"><span class="key">Name</span><span class="val">${chosenEmployee}</span></div>
+      <div class="summary-row"><span class="key">Name</span><span class="val">${chosenEmployee.name}</span></div>
       <div class="summary-row"><span class="key">Date of Birth</span><span class="val">${bday}</span></div>
       <div class="summary-row"><span class="key">Age</span><span class="val">${age}</span></div>
       <div class="summary-row"><span class="key">Personal Email</span><span class="val">${eml}</span></div>
       <div class="summary-row"><span class="key">Mobile Number</span><span class="val">${mob}</span></div>
       <div class="summary-row"><span class="key">Gender</span><span class="val">${gen}</span></div>
-      <div class="summary-row"><span class="key">Submitted</span><span class="val">${record.submittedAt}</span></div>
+      <div class="summary-row"><span class="key">Submitted</span><span class="val">${submittedAt}</span></div>
     `;
 
     showSection(secSuccess);
