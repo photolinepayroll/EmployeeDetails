@@ -1,1 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Employee Details</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f0f4f8;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+      width: 100%;
+      max-width: 480px;
+      padding: 36px 32px;
+    }
+
+    .card-header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .card-header .icon {
+      font-size: 40px;
+      margin-bottom: 8px;
+    }
+
+    .card-header h1 {
+      font-size: 22px;
+      color: #1a2e4a;
+      font-weight: 700;
+    }
+
+    .card-header p {
+      font-size: 13px;
+      color: #6b7a8d;
+      margin-top: 4px;
+    }
+
+    /* ── Step indicators ── */
+    .steps {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 28px;
+      gap: 0;
+    }
+
+    .step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .step-circle {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: #e2e8f0;
+      color: #94a3b8;
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s;
+    }
+
+    .step-label {
+      font-size: 10px;
+      color: #94a3b8;
+      white-space: nowrap;
+      transition: all 0.3s;
+    }
+
+    .step.active .step-circle  { background: #2563eb; color: #fff; }
+    .step.active .step-label   { color: #2563eb; font-weight: 600; }
+    .step.done  .step-circle   { background: #16a34a; color: #fff; }
+    .step.done  .step-label    { color: #16a34a; }
+
+    .step-line {
+      flex: 1;
+      height: 2px;
+      background: #e2e8f0;
+      margin: 0 6px;
+      margin-bottom: 18px;
+      transition: background 0.3s;
+    }
+
+    .step-line.done { background: #16a34a; }
+
+    /* ── Form sections ── */
+    .section { display: none; }
+    .section.active { display: block; }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 6px;
+    }
+
+    .search-wrap {
+      position: relative;
+    }
+
+    .search-wrap input {
+      width: 100%;
+      padding: 10px 14px 10px 38px;
+      border: 1.5px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .search-wrap input:focus { border-color: #2563eb; }
+
+    .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #9ca3af;
+      font-size: 15px;
+    }
+
+    .dropdown {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0; right: 0;
+      background: #fff;
+      border: 1.5px solid #d1d5db;
+      border-radius: 8px;
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 100;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      display: none;
+    }
+
+    .dropdown.open { display: block; }
+
+    .dropdown-item {
+      padding: 10px 14px;
+      font-size: 14px;
+      cursor: pointer;
+      color: #374151;
+      transition: background 0.15s;
+    }
+
+    .dropdown-item:hover { background: #eff6ff; color: #2563eb; }
+
+    .no-results {
+      padding: 10px 14px;
+      font-size: 13px;
+      color: #9ca3af;
+      text-align: center;
+    }
+
+    .selected-badge {
+      margin-top: 10px;
+      background: #eff6ff;
+      border: 1.5px solid #bfdbfe;
+      border-radius: 8px;
+      padding: 10px 14px;
+      display: none;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .selected-badge.show { display: flex; }
+
+    .selected-badge .name { font-weight: 600; color: #1e40af; font-size: 14px; }
+    .selected-badge .check { color: #16a34a; font-size: 18px; }
+
+    /* ── Detail form ── */
+    .form-group { margin-bottom: 18px; }
+
+    .form-group input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .form-group input:focus { border-color: #2563eb; }
+
+    .employee-info-box {
+      background: #f8fafc;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      color: #374151;
+    }
+
+    .employee-info-box span { font-weight: 700; color: #1a2e4a; }
+
+    /* ── Buttons ── */
+    .btn {
+      width: 100%;
+      padding: 11px;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn-primary { background: #2563eb; color: #fff; }
+    .btn-primary:hover:not(:disabled) { background: #1d4ed8; }
+
+    .btn-success { background: #16a34a; color: #fff; }
+    .btn-success:hover:not(:disabled) { background: #15803d; }
+
+    .btn-outline {
+      background: transparent;
+      color: #2563eb;
+      border: 1.5px solid #2563eb;
+      margin-top: 10px;
+    }
+
+    .btn-outline:hover { background: #eff6ff; }
+
+    /* ── Alerts ── */
+    .alert {
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 13px;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    .alert.show { display: flex; align-items: flex-start; gap: 10px; }
+
+    .alert-warning {
+      background: #fffbeb;
+      border: 1.5px solid #fcd34d;
+      color: #92400e;
+    }
+
+    .alert-error {
+      background: #fef2f2;
+      border: 1.5px solid #fca5a5;
+      color: #991b1b;
+    }
+
+    .alert-success {
+      background: #f0fdf4;
+      border: 1.5px solid #86efac;
+      color: #166534;
+    }
+
+    .alert .alert-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+
+    /* ── Success screen ── */
+    .success-screen {
+      text-align: center;
+      padding: 10px 0;
+    }
+
+    .success-screen .big-icon { font-size: 64px; margin-bottom: 12px; }
+    .success-screen h2 { font-size: 20px; color: #166534; font-weight: 700; }
+    .success-screen p  { font-size: 13px; color: #6b7a8d; margin-top: 6px; line-height: 1.6; }
+
+    .summary-box {
+      background: #f8fafc;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin: 18px 0;
+      text-align: left;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      padding: 5px 0;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .summary-row:last-child { border-bottom: none; }
+    .summary-row .key { color: #6b7a8d; }
+    .summary-row .val { color: #1a2e4a; font-weight: 600; }
+
+    /* scrollbar */
+    .dropdown::-webkit-scrollbar { width: 5px; }
+    .dropdown::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <div class="card-header">
+    <div class="icon">👤</div>
+    <h1>Employee Details</h1>
+    <p>Search your name, then fill in your personal details.</p>
+  </div>
+
+  <!-- Step indicator -->
+  <div class="steps">
+    <div class="step active" id="step1">
+      <div class="step-circle">1</div>
+      <div class="step-label">Search</div>
+    </div>
+    <div class="step-line" id="line1"></div>
+    <div class="step active" id="step2-ind" style="opacity:0.4;">
+      <div class="step-circle">2</div>
+      <div class="step-label">Details</div>
+    </div>
+    <div class="step-line" id="line2"></div>
+    <div class="step" id="step3-ind" style="opacity:0.4;">
+      <div class="step-circle">3</div>
+      <div class="step-label">Done</div>
+    </div>
+  </div>
+
+  <!-- STEP 1: Search name -->
+  <div class="section active" id="sec-search">
+    <label for="nameSearch">Search Your Name</label>
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="nameSearch" placeholder="Type your name to search…" autocomplete="off" />
+      <div class="dropdown" id="dropdown"></div>
+    </div>
+
+    <div class="selected-badge" id="selectedBadge">
+      <span class="check">✅</span>
+      <span class="name" id="selectedName"></span>
+      <span style="font-size:12px;color:#6b7a8d;margin-left:auto;">Name verified</span>
+    </div>
+
+    <div class="alert alert-error" id="alertNotFound">
+      <span class="alert-icon">❌</span>
+      <div>Name not found in the employee list. Please contact HR if you think this is a mistake.</div>
+    </div>
+
+    <button class="btn btn-primary" id="btnNext" style="margin-top:18px;" disabled>
+      Continue to Details →
+    </button>
+  </div>
+
+  <!-- STEP 2: Fill details -->
+  <div class="section" id="sec-details">
+    <div class="employee-info-box">
+      Employee: <span id="confirmName"></span>
+    </div>
+
+    <div class="alert alert-warning" id="alertAlreadyFiled">
+      <span class="alert-icon">⚠️</span>
+      <div>
+        <strong>Already submitted!</strong><br>
+        A record for this employee already exists. Submitting again will overwrite the existing record.
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="birthday">Birthday</label>
+      <input type="date" id="birthday" />
+    </div>
+
+    <div class="form-group">
+      <label for="mobile">Mobile Number</label>
+      <input type="tel" id="mobile" placeholder="e.g. 09171234567" maxlength="15" />
+    </div>
+
+    <div class="form-group">
+      <label for="email">Personal Email Address</label>
+      <input type="email" id="email" placeholder="e.g. juan@email.com" />
+    </div>
+
+    <div class="alert alert-error" id="alertValidation">
+      <span class="alert-icon">❌</span>
+      <div id="alertValidationMsg">Please fill in all fields.</div>
+    </div>
+
+    <button class="btn btn-success" id="btnSubmit">Submit Details</button>
+    <button class="btn btn-outline" id="btnBack">← Back to Search</button>
+  </div>
+
+  <!-- STEP 3: Success -->
+  <div class="section" id="sec-success">
+    <div class="success-screen">
+      <div class="big-icon">🎉</div>
+      <h2>Details Submitted!</h2>
+      <p>Your personal details have been successfully recorded. Thank you!</p>
+
+      <div class="summary-box" id="summaryBox"></div>
+
+      <button class="btn btn-outline" id="btnReset" style="margin-top:0;">Submit Another</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ─────────────────────────────────────────────
+  // EMPLOYEE NAME LIST — replace with actual names
+  // ─────────────────────────────────────────────
+  const EMPLOYEE_LIST = [
+    "Abad, Maria Santos",
+    "Aguilar, Jose Ramon",
+    "Alcantara, Luz Dela Cruz",
+    "Bautista, Carlo Miguel",
+    "Buenaventura, Ana Grace",
+    "Castro, Ricardo Jr.",
+    "Corpuz, Rowena Flores",
+    "Cruz, Emmanuel Reyes",
+    "De Guzman, Patricia Anne",
+    "Dela Rosa, Ferdinand",
+    "Diaz, Jennifer Mae",
+    "Domingo, Mark Anthony",
+    "Encarnacion, Sheryl Joy",
+    "Espiritu, Nathan Angelo",
+    "Fernandez, Lourdes",
+    "Garcia, Ronald Ivan",
+    "Gomez, Cristina Luz",
+    "Gonzales, Joseph Emmanuel",
+    "Guerrero, Maricel",
+    "Hernandez, Rodolfo",
+    "Lim, Karen Michelle",
+    "Lopez, Allan Vincent",
+    "Magno, Bernardita",
+    "Manalo, Ricky Boy",
+    "Mendoza, Teresita",
+    "Miranda, Francis John",
+    "Morales, Gina Rose",
+    "Navarro, Patrick Jay",
+    "Natividad, Carmela",
+    "Ocampo, Renato",
+    "Padilla, Vivian Grace",
+    "Pascual, Eduardo",
+    "Perez, Leonora",
+    "Ramos, Andres Marco",
+    "Reyes, Cynthia",
+    "Rivera, Michael Angelo",
+    "Robles, Angelica",
+    "Rodriguez, Roberto",
+    "Rosario, Josephine",
+    "Santos, Dennis Francis",
+    "Sarmiento, Margarita",
+    "Soriano, Felicitas",
+    "Torres, Jonathan",
+    "Valdez, Nora",
+    "Velasquez, Armando",
+    "Villanueva, Maricris",
+    "Villarreal, Ernesto",
+    "Yap, Gloria",
+    "Yu, Benedict",
+    "Zuñiga, Eleanor"
+  ];
+
+  // ─────────────────────────────────────────────
+  // Local storage key for submitted records
+  // ─────────────────────────────────────────────
+  const STORAGE_KEY = "employeeDetails_records";
+
+  function getRecords() {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+  }
+
+  function saveRecord(name, data) {
+    const records = getRecords();
+    records[name] = data;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+  }
+
+  function hasRecord(name) {
+    return !!getRecords()[name];
+  }
+
+  // ─────────────────────────────────────────────
+  // UI references
+  // ─────────────────────────────────────────────
+  const nameSearch    = document.getElementById("nameSearch");
+  const dropdown      = document.getElementById("dropdown");
+  const selectedBadge = document.getElementById("selectedBadge");
+  const selectedName  = document.getElementById("selectedName");
+  const alertNotFound = document.getElementById("alertNotFound");
+  const btnNext       = document.getElementById("btnNext");
+
+  const secSearch  = document.getElementById("sec-search");
+  const secDetails = document.getElementById("sec-details");
+  const secSuccess = document.getElementById("sec-success");
+
+  const confirmName       = document.getElementById("confirmName");
+  const alertAlreadyFiled = document.getElementById("alertAlreadyFiled");
+  const birthday          = document.getElementById("birthday");
+  const mobile            = document.getElementById("mobile");
+  const email             = document.getElementById("email");
+  const alertValidation   = document.getElementById("alertValidation");
+  const alertValidationMsg= document.getElementById("alertValidationMsg");
+  const btnSubmit         = document.getElementById("btnSubmit");
+  const btnBack           = document.getElementById("btnBack");
+  const summaryBox        = document.getElementById("summaryBox");
+  const btnReset          = document.getElementById("btnReset");
+
+  let chosenEmployee = null;
+
+  // ─────────────────────────────────────────────
+  // Step 1: Search logic
+  // ─────────────────────────────────────────────
+  nameSearch.addEventListener("input", () => {
+    const q = nameSearch.value.trim().toLowerCase();
+    chosenEmployee = null;
+    selectedBadge.classList.remove("show");
+    alertNotFound.classList.remove("show");
+    btnNext.disabled = true;
+
+    if (!q) { dropdown.classList.remove("open"); return; }
+
+    const matches = EMPLOYEE_LIST.filter(n => n.toLowerCase().includes(q));
+    dropdown.innerHTML = "";
+
+    if (matches.length === 0) {
+      dropdown.innerHTML = '<div class="no-results">No employee found</div>';
+    } else {
+      matches.forEach(name => {
+        const item = document.createElement("div");
+        item.className = "dropdown-item";
+        item.textContent = name;
+        item.addEventListener("click", () => selectEmployee(name));
+        dropdown.appendChild(item);
+      });
+    }
+    dropdown.classList.add("open");
+  });
+
+  document.addEventListener("click", e => {
+    if (!e.target.closest(".search-wrap")) {
+      dropdown.classList.remove("open");
+    }
+  });
+
+  function selectEmployee(name) {
+    chosenEmployee = name;
+    nameSearch.value = name;
+    dropdown.classList.remove("open");
+    selectedName.textContent = name;
+    selectedBadge.classList.add("show");
+    alertNotFound.classList.remove("show");
+    btnNext.disabled = false;
+  }
+
+  // ─────────────────────────────────────────────
+  // Step 1 → Step 2
+  // ─────────────────────────────────────────────
+  btnNext.addEventListener("click", () => {
+    if (!chosenEmployee) return;
+
+    confirmName.textContent = chosenEmployee;
+    birthday.value = "";
+    mobile.value   = "";
+    email.value    = "";
+    alertValidation.classList.remove("show");
+
+    if (hasRecord(chosenEmployee)) {
+      alertAlreadyFiled.classList.add("show");
+    } else {
+      alertAlreadyFiled.classList.remove("show");
+    }
+
+    showSection(secDetails);
+    updateStepUI(2);
+  });
+
+  // ─────────────────────────────────────────────
+  // Step 2: Back button
+  // ─────────────────────────────────────────────
+  btnBack.addEventListener("click", () => {
+    showSection(secSearch);
+    updateStepUI(1);
+  });
+
+  // ─────────────────────────────────────────────
+  // Step 2: Submit
+  // ─────────────────────────────────────────────
+  btnSubmit.addEventListener("click", () => {
+    alertValidation.classList.remove("show");
+
+    const bday  = birthday.value.trim();
+    const mob   = mobile.value.trim();
+    const eml   = email.value.trim();
+
+    if (!bday || !mob || !eml) {
+      alertValidationMsg.textContent = "Please fill in all fields.";
+      alertValidation.classList.add("show");
+      return;
+    }
+
+    if (!/^[\d\s\+\-\(\)]{7,15}$/.test(mob)) {
+      alertValidationMsg.textContent = "Please enter a valid mobile number.";
+      alertValidation.classList.add("show");
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(eml)) {
+      alertValidationMsg.textContent = "Please enter a valid email address.";
+      alertValidation.classList.add("show");
+      return;
+    }
+
+    const record = { birthday: bday, mobile: mob, email: eml, submittedAt: new Date().toLocaleString() };
+    saveRecord(chosenEmployee, record);
+
+    // Build summary
+    summaryBox.innerHTML = `
+      <div class="summary-row"><span class="key">Name</span><span class="val">${chosenEmployee}</span></div>
+      <div class="summary-row"><span class="key">Birthday</span><span class="val">${formatDate(bday)}</span></div>
+      <div class="summary-row"><span class="key">Mobile</span><span class="val">${mob}</span></div>
+      <div class="summary-row"><span class="key">Email</span><span class="val">${eml}</span></div>
+      <div class="summary-row"><span class="key">Submitted</span><span class="val">${record.submittedAt}</span></div>
+    `;
+
+    showSection(secSuccess);
+    updateStepUI(3);
+  });
+
+  // ─────────────────────────────────────────────
+  // Step 3: Reset
+  // ─────────────────────────────────────────────
+  btnReset.addEventListener("click", () => {
+    chosenEmployee = null;
+    nameSearch.value = "";
+    selectedBadge.classList.remove("show");
+    alertNotFound.classList.remove("show");
+    btnNext.disabled = true;
+    showSection(secSearch);
+    updateStepUI(1);
+  });
+
+  // ─────────────────────────────────────────────
+  // Helpers
+  // ─────────────────────────────────────────────
+  function showSection(target) {
+    [secSearch, secDetails, secSuccess].forEach(s => s.classList.remove("active"));
+    target.classList.add("active");
+  }
+
+  function updateStepUI(step) {
+    const s1    = document.getElementById("step1");
+    const s2    = document.getElementById("step2-ind");
+    const s3    = document.getElementById("step3-ind");
+    const l1    = document.getElementById("line1");
+    const l2    = document.getElementById("line2");
+
+    s1.style.opacity = s2.style.opacity = s3.style.opacity = "1";
+    s1.className = s2.className = s3.className = "step";
+    l1.className = l2.className = "step-line";
+
+    if (step === 1) {
+      s1.classList.add("active");
+      s2.style.opacity = s3.style.opacity = "0.4";
+    } else if (step === 2) {
+      s1.classList.add("done");
+      s2.classList.add("active");
+      l1.classList.add("done");
+      s3.style.opacity = "0.4";
+    } else {
+      s1.classList.add("done");
+      s2.classList.add("done");
+      s3.classList.add("active");
+      l1.classList.add("done");
+      l2.classList.add("done");
+    }
+  }
+
+  function formatDate(dateStr) {
+    if (!dateStr) return "";
+    const d = new Date(dateStr + "T00:00:00");
+    return d.toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" });
+  }
+</script>
+</body>
+</html>
