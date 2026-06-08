@@ -578,6 +578,9 @@
   let sheetEmployees = []; // [{ name, row }]
 
   // Load names from published CSV (no CORS issues)
+  // Also stores existing record status per row
+  const sheetRecords = {}; // row -> true if already has data
+
   async function loadNamesFromSheet() {
     try {
       const res  = await fetch(CSV_URL);
@@ -600,7 +603,11 @@
         if (middleName) fullName += " " + middleName;
         if (suffix)     fullName += " " + suffix;
 
-        sheetEmployees.push({ name: fullName.trim(), row: i + 2 }); // +2 = skip header
+        const rowNum = i + 2;
+        // Check if cols E-I (index 4-8) already have data
+        const hasRecord = [4,5,6,7,8].some(ci => (cols[ci] || "").trim() !== "");
+        sheetEmployees.push({ name: fullName.trim(), row: rowNum });
+        if (hasRecord) sheetRecords[rowNum] = true;
       });
 
       console.log("Loaded " + sheetEmployees.length + " names from CSV");
@@ -641,19 +648,26 @@
     });
   }
 
-  async function checkSheetRecord(row) {
-    try {
-      const data = await jsonp(`${APPS_SCRIPT_URL}?action=checkRecord&row=${row}`);
-      return data.hasRecord === true;
-    } catch (e) { return false; }
+  // Check duplicate from already-loaded CSV data (no extra request needed)
+  function checkSheetRecord(row) {
+    return Promise.resolve(!!sheetRecords[row]);
   }
 
+  // Submit using no-cors fetch — sends data to Apps Script without CORS issues
   async function submitToSheet(row, dob, age, email, mobile, gender) {
     try {
       const params = new URLSearchParams({ action: "submit", row, dob, age, email, mobile, gender });
-      const data = await jsonp(`${APPS_SCRIPT_URL}?${params.toString()}`);
-      return data.success === true;
-    } catch (e) { return false; }
+      await fetch(`${APPS_SCRIPT_URL}?${params.toString()}`, {
+        method: "GET",
+        mode:   "no-cors"
+      });
+      // no-cors gives opaque response — assume success if no exception thrown
+      sheetRecords[row] = true; // mark locally as filed
+      return true;
+    } catch (e) {
+      console.error("Submit error:", e);
+      return false;
+    }
   }
 
   // ─────────────────────────────────────────────
@@ -853,8 +867,8 @@
       success = await submitToSheet(chosenEmployee.row, bday, age, eml, mob, gen);
     }
 
-    if (!success && !chosenEmployee.row) {
-      alertValidationMsg.textContent = "Could not connect to the database. Please try again.";
+    if (!success) {
+      alertValidationMsg.textContent = "Could not save to database. Please try again.";
       alertValidation.classList.add("show");
       btnSubmit.disabled = false;
       btnSubmit.textContent = "Submit Details";
