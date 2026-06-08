@@ -648,8 +648,9 @@
     });
   }
 
-  // Local storage key to track submitted rows on this device
-  const LS_KEY = "bdoSubmitted";
+  // Local storage key — entries expire after 10 mins (CSV cache window)
+  const LS_KEY    = "bdoSubmitted";
+  const LS_EXPIRY = 10 * 60 * 1000; // 10 minutes in ms
 
   function getLocalSubmitted() {
     try { return JSON.parse(localStorage.getItem(LS_KEY) || "{}"); } catch(e) { return {}; }
@@ -657,14 +658,20 @@
 
   function markLocalSubmitted(row) {
     const s = getLocalSubmitted();
-    s[row] = true;
+    s[row] = Date.now(); // store timestamp instead of true
     localStorage.setItem(LS_KEY, JSON.stringify(s));
   }
 
-  // Check duplicate: CSV data + localStorage
+  function isRecentlySubmitted(row) {
+    const s = getLocalSubmitted();
+    if (!s[row]) return false;
+    return (Date.now() - s[row]) < LS_EXPIRY; // only within 10 mins
+  }
+
+  // Check duplicate: CSV is authoritative; localStorage covers the 10-min CSV cache window
   function checkSheetRecord(row) {
     const fromCSV   = !!sheetRecords[row];
-    const fromLocal = !!getLocalSubmitted()[row];
+    const fromLocal = isRecentlySubmitted(row);
     return Promise.resolve(fromCSV || fromLocal);
   }
 
