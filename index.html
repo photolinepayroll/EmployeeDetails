@@ -451,8 +451,8 @@
     <div class="alert alert-warning" id="alertAlreadyFiled">
       <span class="alert-icon">⚠️</span>
       <div>
-        <strong>Already submitted!</strong><br>
-        A record for this employee already exists. Submitting again will overwrite the existing record.
+        <strong>Record Already Submitted!</strong><br>
+        Your details have already been recorded. If you need to make changes or corrections, please contact <strong>HR</strong> directly.
       </div>
     </div>
 
@@ -820,9 +820,21 @@
     alertAlreadyFiled.classList.remove("show");
 
     // Check Google Sheet for existing record
+    let alreadyFiled = false;
     if (chosenEmployee.row) {
-      const exists = await checkSheetRecord(chosenEmployee.row);
-      if (exists) alertAlreadyFiled.classList.add("show");
+      alreadyFiled = await checkSheetRecord(chosenEmployee.row);
+    }
+
+    if (alreadyFiled) {
+      alertAlreadyFiled.classList.add("show");
+      btnSubmit.disabled = true;
+      btnSubmit.style.opacity = "0.4";
+      btnSubmit.title = "Record already submitted. Contact HR for changes.";
+    } else {
+      alertAlreadyFiled.classList.remove("show");
+      btnSubmit.disabled = false;
+      btnSubmit.style.opacity = "";
+      btnSubmit.title = "";
     }
 
     showSection(secDetails);
