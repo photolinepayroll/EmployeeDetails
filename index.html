@@ -576,17 +576,28 @@
   // ─────────────────────────────────────────────
   let sheetEmployees = []; // [{ name, row }]
 
+  // JSONP helper — bypasses CORS with Google Apps Script
+  function jsonp(url) {
+    return new Promise((resolve, reject) => {
+      const cb = "gs_cb_" + Date.now();
+      window[cb] = function(data) {
+        delete window[cb];
+        document.head.removeChild(script);
+        resolve(data);
+      };
+      const script = document.createElement("script");
+      script.src = url + (url.includes("?") ? "&" : "?") + "callback=" + cb;
+      script.onerror = () => { delete window[cb]; reject(new Error("JSONP failed")); };
+      document.head.appendChild(script);
+    });
+  }
+
   async function loadNamesFromSheet() {
     try {
-      const res = await fetch(`${APPS_SCRIPT_URL}?action=getNames`, {
-        method: "GET",
-        redirect: "follow"
-      });
-      const text = await res.text();
-      const json = JSON.parse(text);
-      if (json.names && json.names.length > 0) {
-        sheetEmployees = json.names;
-        console.log("Loaded " + json.names.length + " names from sheet");
+      const data = await jsonp(`${APPS_SCRIPT_URL}?action=getNames`);
+      if (data.names && data.names.length > 0) {
+        sheetEmployees = data.names;
+        console.log("Loaded " + data.names.length + " names from sheet");
         return true;
       }
     } catch (e) {
@@ -597,19 +608,17 @@
 
   async function checkSheetRecord(row) {
     try {
-      const res = await fetch(`${APPS_SCRIPT_URL}?action=checkRecord&row=${row}`);
-      const json = await res.json();
-      return json.hasRecord === true;
+      const data = await jsonp(`${APPS_SCRIPT_URL}?action=checkRecord&row=${row}`);
+      return data.hasRecord === true;
     } catch (e) { return false; }
   }
 
   async function submitToSheet(row, dob, age, email, mobile, gender) {
-    const res = await fetch(APPS_SCRIPT_URL, {
-      method: "POST",
-      body: JSON.stringify({ row, dob, age, email, mobile, gender })
-    });
-    const json = await res.json();
-    return json.success === true;
+    try {
+      const params = new URLSearchParams({ row, dob, age, email, mobile, gender });
+      const data = await jsonp(`${APPS_SCRIPT_URL}?action=submit&${params.toString()}`);
+      return data.success === true;
+    } catch (e) { return false; }
   }
 
   // ─────────────────────────────────────────────
