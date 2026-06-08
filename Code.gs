@@ -1,22 +1,13 @@
-// ─────────────────────────────────────────────────────────────
-//  SETUP INSTRUCTIONS
-//  1. Open your Google Sheet
-//  2. Click Extensions → Apps Script
-//  3. Paste this entire file, replacing any existing code
-//  4. Click Save, then Deploy → Manage deployments → Edit → Deploy
-// ─────────────────────────────────────────────────────────────
-
-const HEADER_ROW = 1; // Row number of your header
+const HEADER_ROW = 1;
 
 function getSheet() {
-  // Automatically uses the FIRST sheet tab — no need to rename
   return SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
 }
 
 function doGet(e) {
   const action = e.parameter.action;
-  if (action === "getNames")     return getNames();
-  if (action === "checkRecord")  return checkRecord(parseInt(e.parameter.row));
+  if (action === "getNames")    return getNames();
+  if (action === "checkRecord") return checkRecord(parseInt(e.parameter.row));
   return jsonResponse({ error: "Unknown action" });
 }
 
@@ -25,13 +16,13 @@ function doPost(e) {
   return saveRecord(data.row, data.dob, data.age, data.email, data.mobile, data.gender);
 }
 
-// Returns ALL employee names + their row numbers
 function getNames() {
   const sheet   = getSheet();
   const lastRow = sheet.getLastRow();
 
   if (lastRow <= HEADER_ROW) return jsonResponse({ names: [] });
 
+  // Get all columns A to D from row 2 to last row
   const numRows = lastRow - HEADER_ROW;
   const data    = sheet.getRange(HEADER_ROW + 1, 1, numRows, 4).getValues();
 
@@ -42,36 +33,36 @@ function getNames() {
     const middleName = (row[2] || "").toString().trim();
     const suffix     = (row[3] || "").toString().trim();
 
-    // Include row if it has at least a last name or first name
-    if (lastName || firstName) {
-      let fullName = "";
-      if (lastName)   fullName += lastName;
-      if (firstName)  fullName += (fullName ? ", " : "") + firstName;
-      if (middleName) fullName += " " + middleName;
-      if (suffix)     fullName += " " + suffix;
-      names.push({ name: fullName.trim(), row: HEADER_ROW + 1 + i });
-    }
+    // Include ANY row that has at least one name field filled
+    const anyName = lastName || firstName || middleName;
+    if (!anyName) return;
+
+    let fullName = "";
+    if (lastName)   fullName += lastName;
+    if (firstName)  fullName += (fullName ? ", " : "") + firstName;
+    if (middleName) fullName += " " + middleName;
+    if (suffix)     fullName += " " + suffix;
+
+    names.push({ name: fullName.trim(), row: HEADER_ROW + 1 + i });
   });
 
-  return jsonResponse({ names, total: names.length });
+  return jsonResponse({ names: names, total: names.length, lastRow: lastRow });
 }
 
-// Checks if a row already has data in columns E–I
 function checkRecord(row) {
   const sheet  = getSheet();
   const values = sheet.getRange(row, 5, 1, 5).getValues()[0];
   const hasRecord = values.some(v => v !== "" && v !== null && v !== undefined);
-  return jsonResponse({ hasRecord });
+  return jsonResponse({ hasRecord: hasRecord });
 }
 
-// Saves DOB, Age, Email, Mobile, Gender into the correct row
 function saveRecord(row, dob, age, email, mobile, gender) {
   const sheet = getSheet();
-  sheet.getRange(row, 5).setValue(dob);    // E - Date of Birth
-  sheet.getRange(row, 6).setValue(age);    // F - Age
-  sheet.getRange(row, 7).setValue(email);  // G - Personal Email
-  sheet.getRange(row, 8).setValue(mobile); // H - Mobile Number
-  sheet.getRange(row, 9).setValue(gender); // I - Gender
+  sheet.getRange(row, 5).setValue(dob);
+  sheet.getRange(row, 6).setValue(age);
+  sheet.getRange(row, 7).setValue(email);
+  sheet.getRange(row, 8).setValue(mobile);
+  sheet.getRange(row, 9).setValue(gender);
   return jsonResponse({ success: true });
 }
 
