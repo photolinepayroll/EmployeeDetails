@@ -514,6 +514,7 @@
   // PASTE YOUR APPS SCRIPT WEB APP URL BELOW
   // ─────────────────────────────────────────────
   const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby-4rlqSHKQV1AX2M04tWG6JlEiQpQpugaAQ_I7KLwNX7xF-KDklbsyCH7JzIVhrK1i/exec";
+  const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSfcbaaz3KlAqrGrDECQUb9D-yJCqsiByRFwoO3GQYudHGpSAZfUjFVm7nS2oNe26zdkwBKu2wg6fv1/pub?output=csv";
 
   // ─────────────────────────────────────────────
   // FALLBACK name list (used only if sheet fails)
@@ -576,7 +577,55 @@
   // ─────────────────────────────────────────────
   let sheetEmployees = []; // [{ name, row }]
 
-  // JSONP helper — bypasses CORS with Google Apps Script
+  // Load names from published CSV (no CORS issues)
+  async function loadNamesFromSheet() {
+    try {
+      const res  = await fetch(CSV_URL);
+      const text = await res.text();
+      const rows = text.trim().split("\n").slice(1); // skip header row
+
+      sheetEmployees = [];
+      rows.forEach((line, i) => {
+        const cols = parseCSVLine(line);
+        const lastName   = (cols[0] || "").trim();
+        const firstName  = (cols[1] || "").trim();
+        const middleName = (cols[2] || "").trim();
+        const suffix     = (cols[3] || "").trim();
+
+        if (!lastName && !firstName && !middleName) return;
+
+        let fullName = "";
+        if (lastName)   fullName += lastName;
+        if (firstName)  fullName += (fullName ? ", " : "") + firstName;
+        if (middleName) fullName += " " + middleName;
+        if (suffix)     fullName += " " + suffix;
+
+        sheetEmployees.push({ name: fullName.trim(), row: i + 2 }); // +2 = skip header
+      });
+
+      console.log("Loaded " + sheetEmployees.length + " names from CSV");
+      return sheetEmployees.length > 0;
+    } catch (e) {
+      console.error("CSV load error:", e);
+      return false;
+    }
+  }
+
+  // Simple CSV line parser (handles quoted commas)
+  function parseCSVLine(line) {
+    const result = [];
+    let cur = "", inQuote = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') { inQuote = !inQuote; }
+      else if (ch === ',' && !inQuote) { result.push(cur); cur = ""; }
+      else { cur += ch; }
+    }
+    result.push(cur);
+    return result;
+  }
+
+  // JSONP helper for Apps Script (used for checkRecord & submit)
   function jsonp(url) {
     return new Promise((resolve, reject) => {
       const cb = "gs_cb_" + Date.now();
@@ -586,24 +635,10 @@
         resolve(data);
       };
       const script = document.createElement("script");
-      script.src = url + (url.includes("?") ? "&" : "?") + "callback=" + cb;
+      script.src = url + "&callback=" + cb;
       script.onerror = () => { delete window[cb]; reject(new Error("JSONP failed")); };
       document.head.appendChild(script);
     });
-  }
-
-  async function loadNamesFromSheet() {
-    try {
-      const data = await jsonp(`${APPS_SCRIPT_URL}?action=getNames`);
-      if (data.names && data.names.length > 0) {
-        sheetEmployees = data.names;
-        console.log("Loaded " + data.names.length + " names from sheet");
-        return true;
-      }
-    } catch (e) {
-      console.error("Sheet load error:", e);
-    }
-    return false;
   }
 
   async function checkSheetRecord(row) {
@@ -615,8 +650,8 @@
 
   async function submitToSheet(row, dob, age, email, mobile, gender) {
     try {
-      const params = new URLSearchParams({ row, dob, age, email, mobile, gender });
-      const data = await jsonp(`${APPS_SCRIPT_URL}?action=submit&${params.toString()}`);
+      const params = new URLSearchParams({ action: "submit", row, dob, age, email, mobile, gender });
+      const data = await jsonp(`${APPS_SCRIPT_URL}?${params.toString()}`);
       return data.success === true;
     } catch (e) { return false; }
   }
