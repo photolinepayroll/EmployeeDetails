@@ -39,11 +39,11 @@
     /* Logos header */
     .logos-header {
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 16px;
+      gap: 6px;
       margin-bottom: 14px;
-      flex-wrap: wrap;
     }
 
     .bdo-logo {
@@ -52,11 +52,18 @@
       justify-content: center;
     }
 
-    .logo-divider {
-      width: 1.5px;
-      height: 52px;
-      background: #d1d5db;
-      flex-shrink: 0;
+    .photoline-sub {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 2px;
+    }
+
+    .photoline-sub .pl-label {
+      font-size: 10px;
+      color: #9ca3af;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
     }
 
     /* Internal use banner */
@@ -360,29 +367,37 @@
 
 <div class="card">
   <div class="card-header">
-    <!-- Logos row -->
+    <!-- Logos: BDO on top, Photoline below smaller -->
     <div class="logos-header">
 
-      <!-- Photoline Logo -->
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 310 80" width="155" height="50" role="img" aria-label="Photoline">
-        <text x="4" y="66"
-          font-family="Arial Rounded MT Bold, Arial Black, Arial, sans-serif"
-          font-weight="900"
-          font-size="68"
-          fill="#1414e0"
-          letter-spacing="-2">Photoline</text>
-      </svg>
-
-      <div class="logo-divider"></div>
-
-      <!-- BDO Insure Logo -->
+      <!-- BDO Insure Logo (top, larger) -->
       <div class="bdo-logo">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 120" width="200" height="58" role="img" aria-label="BDO Insure">
-          <text x="8" y="95" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="100" fill="#1a50a0">B</text>
-          <text x="72" y="95" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="100" fill="#1a50a0">D</text>
-          <circle cx="198" cy="52" r="38" fill="none" stroke="#f5a800" stroke-width="16"/>
-          <text x="247" y="88" font-family="Arial, sans-serif" font-weight="700" font-size="58" fill="#1a50a0">Insure</text>
-          <text x="399" y="40" font-family="Arial, sans-serif" font-weight="400" font-size="28" fill="#1a50a0">®</text>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 130" width="260" height="68" role="img" aria-label="BDO Insure">
+          <!-- B -->
+          <text x="5" y="105" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="108" fill="#1a50a0">B</text>
+          <!-- D -->
+          <text x="78" y="105" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="108" fill="#1a50a0">D</text>
+          <!-- Blue O (background letter) -->
+          <text x="152" y="105" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="108" fill="#1a50a0">O</text>
+          <!-- Gold oval ring overlapping the O -->
+          <ellipse cx="213" cy="58" rx="46" ry="50" fill="none" stroke="#f5a800" stroke-width="18"/>
+          <!-- "Insure" text -->
+          <text x="270" y="96" font-family="Arial, sans-serif" font-weight="700" font-size="62" fill="#1a50a0">Insure</text>
+          <!-- ® -->
+          <text x="470" y="38" font-family="Arial, sans-serif" font-weight="400" font-size="30" fill="#1a50a0">®</text>
+        </svg>
+      </div>
+
+      <!-- Photoline Logo (below, smaller) -->
+      <div class="photoline-sub">
+        <span class="pl-label">Participating:</span>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 55" width="110" height="22" role="img" aria-label="Photoline">
+          <text x="2" y="46"
+            font-family="Arial Rounded MT Bold, Arial Black, Arial, sans-serif"
+            font-weight="900"
+            font-size="50"
+            fill="#1414e0"
+            letter-spacing="-1">Photoline</text>
         </svg>
       </div>
 
