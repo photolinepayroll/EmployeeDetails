@@ -648,12 +648,27 @@
     });
   }
 
-  // Check duplicate from already-loaded CSV data (no extra request needed)
-  function checkSheetRecord(row) {
-    return Promise.resolve(!!sheetRecords[row]);
+  // Local storage key to track submitted rows on this device
+  const LS_KEY = "bdoSubmitted";
+
+  function getLocalSubmitted() {
+    try { return JSON.parse(localStorage.getItem(LS_KEY) || "{}"); } catch(e) { return {}; }
   }
 
-  // Submit using no-cors fetch — sends data to Apps Script without CORS issues
+  function markLocalSubmitted(row) {
+    const s = getLocalSubmitted();
+    s[row] = true;
+    localStorage.setItem(LS_KEY, JSON.stringify(s));
+  }
+
+  // Check duplicate: CSV data + localStorage
+  function checkSheetRecord(row) {
+    const fromCSV   = !!sheetRecords[row];
+    const fromLocal = !!getLocalSubmitted()[row];
+    return Promise.resolve(fromCSV || fromLocal);
+  }
+
+  // Submit using no-cors fetch
   async function submitToSheet(row, dob, age, email, mobile, gender) {
     try {
       const params = new URLSearchParams({ action: "submit", row, dob, age, email, mobile, gender });
@@ -661,8 +676,8 @@
         method: "GET",
         mode:   "no-cors"
       });
-      // no-cors gives opaque response — assume success if no exception thrown
-      sheetRecords[row] = true; // mark locally as filed
+      sheetRecords[row] = true;
+      markLocalSubmitted(row); // remember this on the device
       return true;
     } catch (e) {
       console.error("Submit error:", e);
